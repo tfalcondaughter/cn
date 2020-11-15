@@ -1,5 +1,8 @@
+import random
 import socket as s
 import time as t
+
+import pandas as pd
 
 server_socket = s.socket(s.AF_INET, s.SOCK_STREAM)
 host = s.gethostname()
@@ -7,19 +10,58 @@ port = 1111
 server_socket.bind((host, port))
 server_socket.listen(5)
 
-my_set = {('cat_weight', 'int', 5), ('dog_weight', 'int', 10), ('elephant_weight', 'int', 500)}
+file = pd.read_csv('cn.csv', dtype={'code': 'str', 'name': 'str', 'type': 'str', 'value': 'str'})
 
 
-def commands(server_set, client_text, command):
+def personal_code(in_code):
+    code_existence = True
+    if in_code == 'new':
+        new_code = None
+        while code_existence:
+            new_code = str(int(random.uniform(0, 9))) + str(int(random.uniform(0, 9))) + str(
+                int(random.uniform(0, 9))) + str(int(random.uniform(0, 9))) + str(int(random.uniform(0, 9))) + str(
+                int(random.uniform(0, 9)))
+            if not file[file.code == new_code].empty:
+                code_existence = True
+            else:
+                code_existence = False
+        global code
+        code = new_code
+        client_socket.send(new_code.encode('ascii'))
+    else:
+        if not file[file.code == in_code].empty:
+            client_set = file[file.code == in_code]
+            return client_set
+
+
+def commands(server_set, command, in_code):
     if command == 'PRINT':
-        for set_list in server_set:
-            if client_text == set_list[0]:
-                client_socket.send(set_list[0].encode('ascii'))
-                client_socket.send(set_list[1].encode('ascii'))
-                client_socket.send(str(set_list[2]).encode('ascii'))
+        in_name = client_socket.recv(1024).decode('ascii')
+        if not server_set[server_set.name == in_name].empty:
+            for i in server_set.itertuples():
+                name = ''.join(map(str, i[2]))
+                type = ''.join(map(str, i[3]))
+                value = ''.join(map(str, i[4]))
+                client_socket.send(name.encode('ascii'))
+                client_socket.send(type.encode('ascii'))
+                client_socket.send(value.encode('ascii'))
     elif command == 'GET_OBJECTS_NAMES':
-        for set_list in server_set:
-            print(set_list[0])
+        number = len(server_set.index)
+        client_socket.send(str(number).encode('ascii'))
+        for i in server_set.itertuples():
+            name = ''.join(map(str, i[2]))
+            client_socket.send(name.encode('ascii'))
+    elif command == 'CREATE':
+        with open('cn.csv', 'a') as f:
+            f.write(in_code + ',' + client_socket.recv(1024).decode('ascii') + ',' + client_socket.recv(1024).decode(
+                'ascii') + ',' + client_socket.recv(1024).decode('ascii'))
+    elif command == 'CHANGE':
+        in_name = client_socket.recv(1024).decode('ascii')
+        server_set.set_index("name")
+        server_set.drop(in_name, axis=0)
+        with open('cn.csv', 'a') as f:
+            f.write(in_code + ',' + in_name + ',' + client_socket.recv(1024).decode('ascii') + ',' + client_socket.recv(
+                1024).decode('ascii'))
 
 
 e = b'no'
@@ -28,7 +70,11 @@ while e.decode('ascii') != 'exit':
     print("Connected with:", address[0], "address:", address[1])
     currentTime = t.ctime(t.time()) + '\n'
     client_socket.send(currentTime.encode('ascii'))
+    code = client_socket.recv(1024).decode('ascii')
+    client_set = personal_code(code)
+    if client_set is None:
+        client_socket.send("stop".encode('ascii'))
+        client_socket.send("There is no such code.".encode('ascii'))
     e = client_socket.recv(1024)
-    text = client_socket.recv(1024)
-    commands(my_set, text.decode('ascii'), e.decode('ascii'))
+    commands(client_set, e.decode('ascii'), code)
     client_socket.close()
