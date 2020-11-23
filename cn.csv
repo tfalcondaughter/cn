@@ -1,5 +1,4 @@
 code,name,type,value
-111111,cat_weight,int,5
-222222,dog_weight,int,15
-333333,elephant_weight,int,500
-318313,baby_weight,float,4.100
+111111,cat_weight,int,13
+222222,dog_weight,int,30
+333333,eleph_weight,int,4100

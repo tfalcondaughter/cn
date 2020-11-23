@@ -53,28 +53,38 @@ def commands(server_set, command, in_code):
             client_socket.send(name.encode('ascii'))
     elif command == 'CREATE':
         with open('cn.csv', 'a') as f:
-            f.write(in_code + ',' + client_socket.recv(1024).decode('ascii') + ',' + client_socket.recv(1024).decode(
-                'ascii') + ',' + client_socket.recv(1024).decode('ascii'))
+            f.write('\n' + in_code + ',' + client_socket.recv(1024).decode('ascii') + ',' +
+                    client_socket.recv(1024).decode('ascii') + ',' + client_socket.recv(1024).decode('ascii'))
+        f.close()
     elif command == 'CHANGE':
         in_name = client_socket.recv(1024).decode('ascii')
-        server_set.set_index("name")
-        server_set.drop(in_name, axis=0)
-        with open('cn.csv', 'a') as f:
-            f.write(in_code + ',' + in_name + ',' + client_socket.recv(1024).decode('ascii') + ',' + client_socket.recv(
+        save_f = file[file.name != in_name]
+        with open('cn.csv', 'w') as f:
+            f.write('code,name,type,value\n')
+            for i in save_f.itertuples():
+                f.write(''.join(map(str, i[1])) + ',' + ''.join(map(str, i[2])) + ',' + ''.join(
+                    map(str, i[3])) + ',' + ''.join(map(str, i[4])) + '\n')
+            f.write(in_code + ',' + in_name + ',' + client_socket.recv(1024).decode(
+                'ascii') + ',' + client_socket.recv(
                 1024).decode('ascii'))
+            f.close()
 
 
-e = b'no'
-while e.decode('ascii') != 'exit':
+while True:
     client_socket, address = server_socket.accept()
     print("Connected with:", address[0], "address:", address[1])
     currentTime = t.ctime(t.time()) + '\n'
     client_socket.send(currentTime.encode('ascii'))
     code = client_socket.recv(1024).decode('ascii')
-    client_set = personal_code(code)
-    if client_set is None:
-        client_socket.send("stop".encode('ascii'))
-        client_socket.send("There is no such code.".encode('ascii'))
-    e = client_socket.recv(1024)
-    commands(client_set, e.decode('ascii'), code)
+    e = 'go'
+    while e != "EXIT".encode('ascii'):
+        file = pd.read_csv('cn.csv', dtype={'code': 'str', 'name': 'str', 'type': 'str', 'value': 'str'})
+        client_set = personal_code(code)
+        if client_set is None:
+            client_socket.send("stop".encode('ascii'))
+            client_socket.send("There is no such code.".encode('ascii'))
+        else:
+            client_socket.send("go".encode('ascii'))
+            e = client_socket.recv(1024)
+            commands(client_set, e.decode('ascii'), code)
     client_socket.close()
