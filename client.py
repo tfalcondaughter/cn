@@ -7,40 +7,70 @@ import socket as s
 
 S = s.socket(s.AF_INET, s.SOCK_STREAM)
 host = s.gethostname()
-port = 1111
-S.connect((host, port))
-print("Connected to server on:", S.recv(1024).decode('ascii'))
+port = 1032
+try:
+    S.connect((host, port))
+    print("Connected to server on:", S.recv(1024).decode('ascii'))
+    print("Your id:", S.recv(1024).decode('ascii'))
 
-code = input("Enter your personal code or write 'new' if you don't have one: ")
-S.send(code.encode('ascii'))
-if code == 'new':
-    print("Your new code is now: ", end='')
-    print(S.recv(1024).decode('ascii'))
-
-if S.recv(1024).decode('ascii') == "stop":
-    print(S.recv(1024).decode('ascii'))
-    S.close()
-
-command = 'go'
-while command != 'EXIT':
-    command = input("Enter a command: ")
-    S.send(command.encode('ascii'))
-    if command == 'PRINT':
-        name = input("Enter name: ")
-        S.send(name.encode('ascii'))
-        a = S.recv(1024)
-        b = S.recv(1024)
-        c = S.recv(1024)
-        print(a.decode('ascii'), ';', b.decode('ascii'), ';', c.decode('ascii'))
-    elif command == 'GET_OBJECTS_NAMES':
-        number = int(S.recv(1024).decode('ascii'))
-        for i in range(number):
+    while True:
+        code = input("Enter your personal code or write 'new' if you don't have one: ")
+        S.send(code.encode('ascii'))
+        if code == 'new':
+            print("Your new code is now: ", end='')
             print(S.recv(1024).decode('ascii'))
-    elif command == 'CREATE' or 'CHANGE':
-        name = input("Enter name: ")
-        S.send(name.encode('ascii'))
-        type = input("Enter type: ")
-        S.send(type.encode('ascii'))
-        value = input("Enter value: ")
-        S.send(value.encode('ascii'))
-S.close()
+
+        if S.recv(1024).decode('ascii') == "stop":
+            print(S.recv(1024).decode('ascii'))
+            S.close()
+        while True:
+            command = input("Enter a command: ")
+            S.send(command.encode('ascii'))
+            com = S.recv(1024).decode('ascii')
+            if com == 'wrong command':
+                print(com)
+            else:
+                if command == 'PRINT':
+                    name = input("Enter name: ")
+                    S.send(name.encode('ascii'))
+                    a = S.recv(1024)
+                    b = S.recv(1024)
+                    c = S.recv(1024)
+                    print(a.decode('ascii'), ';', b.decode('ascii'), ';', c.decode('ascii'))
+                elif command == 'GET_OBJECTS_NAMES':
+                    number = int(S.recv(1024).decode('ascii'))
+                    for i in range(number):
+                        print(S.recv(1024).decode('ascii'))
+                elif command == 'CREATE':
+                    name = input("Enter name: ")
+                    S.send(name.encode('ascii'))
+                    type = input("Enter type: ")
+                    S.send(type.encode('ascii'))
+                    value = input("Enter value: ")
+                    S.send(value.encode('ascii'))
+                elif command == 'CHANGE':
+                    name = input("Enter name: ")
+                    S.send(name.encode('ascii'))
+                    new_name = input("Enter new name: ")
+                    S.send(new_name.encode('ascii'))
+                    type = input("Enter new type: ")
+                    S.send(type.encode('ascii'))
+                    value = input("Enter new value: ")
+                    S.send(value.encode('ascii'))
+                elif command == 'Who':
+                    com = S.recv(1024).decode('ascii')
+                    who = S.recv(1024).decode('ascii')
+                    print(who)
+                elif command == 'EXIT_CLIENT':
+                    break
+                elif command == 'EXIT':
+                    break
+        if command == 'EXIT_CLIENT':
+            print('switching to another user\n')
+            continue
+        elif command == 'EXIT':
+            break
+    S.close()
+    print('disconnected')
+except ConnectionError as c_e:
+    print('something went wrong:', c_e)

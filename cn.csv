@@ -2,3 +2,6 @@ code,name,type,value
 111111,cat_weight,int,13
 222222,dog_weight,int,30
 333333,eleph_weight,int,4100
+400471,baby,int,4
+175166,kat,int,6
+new,fob,float,6.8
