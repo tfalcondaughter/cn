@@ -26,20 +26,19 @@ def personal_code(in_code, c_socket):
                 code_existence = True
             else:
                 code_existence = False
-        global code
-        code = new_code
         c_socket.send(new_code.encode('ascii'))
+        return None, new_code
     else:
         if not file[file.code == in_code].empty:
             client_set = file[file.code == in_code]
-            return client_set
+            return client_set, in_code
 
 
 def commands(server_set, command, in_code, c_socket):
     global file
     if command == 'PRINT':
         c_print(server_set, c_socket)
-    elif command == 'GET_OBJECTS_NAMES':
+    elif command == 'GET_NAMES':
         c_get(server_set, c_socket)
     elif command == 'CREATE':
         c_create(in_code, c_socket)
@@ -49,7 +48,7 @@ def commands(server_set, command, in_code, c_socket):
         who(c_socket)
     else:
         if command != 'EXIT' and command != 'EXIT_CLIENT':
-            c_socket.send('wrong command'.encode('ascii'))
+            c_socket.send('invalid command'.encode('ascii'))
 
 
 def c_print(server_set, c_socket):
@@ -110,42 +109,43 @@ def rewrite():
                 map(str, i[3])) + ',' + ''.join(map(str, i[4])) + '\n')
 
 
-def client(e, c_socket, address):
+def client(c_e, c_socket, c_address):
     while True:
-        code = c_socket.recv(1024).decode('ascii')
-        new = code
-        client_set = personal_code(code, c_socket)
+        input_code = c_socket.recv(1024).decode('ascii')
+        new = input_code
+        client_set, code = personal_code(input_code, c_socket)
         if (client_set is None) and (new != 'new'):
             c_socket.send("stop".encode('ascii'))
             c_socket.send("There is no such code.".encode('ascii'))
             continue
         else:
             c_socket.send("go".encode('ascii'))
-        while e != 'EXIT_CLIENT'.encode('ascii'):
-            e = c_socket.recv(1024)
-            if e == 'EXIT'.encode('ascii'):
+        while c_e != 'EXIT_CLIENT'.encode('ascii'):
+            c_e = c_socket.recv(1024)
+            if c_e == 'EXIT'.encode('ascii'):
                 rewrite()
                 break
-            commands(client_set, e.decode('ascii'), code, c_socket)
+            commands(client_set, c_e.decode('ascii'), code, c_socket)
+            client_set = file[file.code == code]
         else:
-            e = 'new_it'
+            c_e = 'new_it'
             c_socket.send("go".encode('ascii'))
-        if e == 'EXIT'.encode('ascii'):
+        if c_e == 'EXIT'.encode('ascii'):
             break
     c_socket.close()
-    print(f'client {address} disconnected')
+    print(f'client {c_address} disconnected')
 
 
 while True:
     try:
         server_socket.listen(1)
+        print('waiting for client...')
         e = 'go'
         client_socket, address = server_socket.accept()
-        c_hash = client_socket.__hash__()
-        print("Connected with:", address[0], "address:", address[1], "id:", str(c_hash))
+        c_id = int(t.time())
+        print("Connected with:", address[0], "address:", address[1], "id:", str(c_id))
         currentTime = t.ctime(t.time()) + '\n'
         client_socket.send(currentTime.encode('ascii'))
-        client_socket.send(str(c_hash).encode('ascii'))
-        th.Thread(target=client, args=(e, client_socket, c_hash)).start()
+        th.Thread(target=client, args=(e, client_socket, c_id)).start()
     except ConnectionError as c_e:
         print('something went wrong:', c_e)

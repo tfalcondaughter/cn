@@ -11,7 +11,6 @@ port = 1032
 try:
     S.connect((host, port))
     print("Connected to server on:", S.recv(1024).decode('ascii'))
-    print("Your id:", S.recv(1024).decode('ascii'))
 
     while True:
         code = input("Enter your personal code or write 'new' if you don't have one: ")
@@ -27,7 +26,7 @@ try:
             command = input("Enter a command: ")
             S.send(command.encode('ascii'))
             com = S.recv(1024).decode('ascii')
-            if com == 'wrong command':
+            if com == 'invalid command':
                 print(com)
             else:
                 if command == 'PRINT':
@@ -37,7 +36,7 @@ try:
                     b = S.recv(1024)
                     c = S.recv(1024)
                     print(a.decode('ascii'), ';', b.decode('ascii'), ';', c.decode('ascii'))
-                elif command == 'GET_OBJECTS_NAMES':
+                elif command == 'GET_NAMES':
                     number = int(S.recv(1024).decode('ascii'))
                     for i in range(number):
                         print(S.recv(1024).decode('ascii'))
@@ -72,5 +71,7 @@ try:
             break
     S.close()
     print('disconnected')
+except ConnectionAbortedError as c_a:
+    print('something went wrong:', c_a)
 except ConnectionError as c_e:
     print('something went wrong:', c_e)
