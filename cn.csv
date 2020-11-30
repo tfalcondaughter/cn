@@ -1,5 +1,4 @@
 code,name,type,value
-111111,cat_weight,int,13
 222222,dog_weight,int,30
 333333,eleph_weight,int,4100
 400471,baby,int,4
@@ -10,3 +9,8 @@ code,name,type,value
 052117,g,int,6
 018312,h,int,8
 534188,ggg,str,kjh
+275076,g,int,6
+708586,nn,int,6
+708586,k,str,lkj
+111111,cat,float,5.5
+371425,gq,str,log

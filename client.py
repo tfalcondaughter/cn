@@ -63,7 +63,6 @@ try:
                     if fine != "fine":
                         print(fine)
                 elif command == 'Who':
-                    com = S.recv(1024).decode('ascii')
                     who = S.recv(1024).decode('ascii')
                     print(who)
                 elif command == 'EXIT_CLIENT':
