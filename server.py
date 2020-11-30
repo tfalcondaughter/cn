@@ -51,6 +51,30 @@ def commands(server_set, command, in_code, c_socket):
             c_socket.send('invalid command'.encode('ascii'))
 
 
+def c_check_type(c_type, c_value, c_socket):
+    check = True
+    try:
+        if c_type == "int":
+            int(c_value)
+        elif c_type == "float":
+            float(c_value)
+        elif c_type == "str":
+            str(c_value)
+        elif c_type == "bool":
+            bool(c_value)
+        elif c_type == "complex":
+            complex(c_value)
+        else:
+            check = False
+            c_socket.send("server does not support that type".encode('ascii'))
+    except ValueError:
+        check = False
+        c_socket.send("your value does not match the type".encode('ascii'))
+    else:
+        c_socket.send("fine".encode('ascii'))
+    return check
+
+
 def c_print(server_set, c_socket):
     c_socket.send('valid command'.encode('ascii'))
     in_name = c_socket.recv(1024).decode('ascii')
@@ -79,8 +103,10 @@ def c_create(in_code, c_socket):
     name = c_socket.recv(1024).decode('ascii')
     type = c_socket.recv(1024).decode('ascii')
     value = c_socket.recv(1024).decode('ascii')
-    new_row = pd.DataFrame([[in_code, name, type, value]], columns=['code', 'name', 'type', 'value'])
-    file = file.append(new_row, ignore_index=True)
+    check = c_check_type(type, value, c_socket)
+    if check:
+        new_row = pd.DataFrame([[in_code, name, type, value]], columns=['code', 'name', 'type', 'value'])
+        file = file.append(new_row, ignore_index=True)
 
 
 def c_change(in_code, c_socket):
@@ -91,8 +117,10 @@ def c_change(in_code, c_socket):
     new_name = c_socket.recv(1024).decode('ascii')
     new_type = c_socket.recv(1024).decode('ascii')
     new_value = c_socket.recv(1024).decode('ascii')
-    new_row = pd.DataFrame([[in_code, new_name, new_type, new_value]], columns=['code', 'name', 'type', 'value'])
-    file = file.append(new_row, ignore_index=True)
+    check = c_check_type(new_type, new_value, c_socket)
+    if check:
+        new_row = pd.DataFrame([[in_code, new_name, new_type, new_value]], columns=['code', 'name', 'type', 'value'])
+        file = file.append(new_row, ignore_index=True)
 
 
 def who(c_socket):

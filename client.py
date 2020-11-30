@@ -47,6 +47,9 @@ try:
                     S.send(type.encode('ascii'))
                     value = input("Enter value: ")
                     S.send(value.encode('ascii'))
+                    fine = S.recv(1024).decode('ascii')
+                    if fine != "fine":
+                        print(fine)
                 elif command == 'CHANGE':
                     name = input("Enter name: ")
                     S.send(name.encode('ascii'))
@@ -56,6 +59,9 @@ try:
                     S.send(type.encode('ascii'))
                     value = input("Enter new value: ")
                     S.send(value.encode('ascii'))
+                    fine = S.recv(1024).decode('ascii')
+                    if fine != "fine":
+                        print(fine)
                 elif command == 'Who':
                     com = S.recv(1024).decode('ascii')
                     who = S.recv(1024).decode('ascii')
